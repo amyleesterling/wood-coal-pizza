@@ -50,6 +50,10 @@ jobs:
           cp results/summary.json    site/ 2>/dev/null || true
 
       - uses: actions/configure-pages@v5
+        with:
+          # Enable Pages automatically (uses the pages: write permission above)
+          # so no manual Settings -> Pages step is required.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
