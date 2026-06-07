@@ -35,3 +35,5 @@ jobs:
           pip install -e . pytest
       - name: Run tests
         run: pytest -q
+
+# (re-trigger after initial registration)
