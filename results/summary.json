@@ -1,0 +1,48 @@
+{
+  "wcpizza_version": "0.1.0",
+  "source": "live",
+  "states": [
+    "CT",
+    "NY",
+    "NJ",
+    "PA",
+    "MA",
+    "RI",
+    "NH",
+    "VT",
+    "ME",
+    "MD",
+    "AZ",
+    "OR",
+    "CA",
+    "IL",
+    "OH",
+    "MI",
+    "WA",
+    "CO",
+    "MN",
+    "WI"
+  ],
+  "raw_records": 24169,
+  "deduped_records": 24062,
+  "wood_coal_detected": 136,
+  "cities_ranked": 0,
+  "parameters": {
+    "dedupe": {
+      "distance_m": 75,
+      "name_similarity": 0.87
+    },
+    "classify": {
+      "min_confidence": 0.5,
+      "use_website_text": false,
+      "website_fetch_timeout_s": 10
+    },
+    "rank": {
+      "min_restaurants": 3,
+      "min_population": 20000,
+      "per_population": 100000,
+      "shrinkage_k": 5
+    }
+  },
+  "top_cities": []
+}
