@@ -21,7 +21,7 @@ on:
       states:
         description: "Comma-separated USPS state codes to include"
         required: true
-        default: "CT,NY,NJ,PA,MA,RI,NH,VT,ME,MD,AZ,OR,CA,IL,OH,MI,WA,CO,MN,WI"
+        default: "AL,AK,AZ,AR,CA,CO,CT,DE,DC,FL,GA,HI,ID,IL,IN,IA,KS,KY,LA,ME,MD,MA,MI,MN,MS,MO,MT,NE,NV,NH,NJ,NM,NY,NC,ND,OH,OK,OR,PA,RI,SC,SD,TN,TX,UT,VT,VA,WA,WV,WI,WY"
 
 permissions:
   contents: write
@@ -29,7 +29,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -42,12 +42,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
+      # Persist the HTTP response cache across runs so Overpass/Census aren't
+      # re-queried every time (faster, and a good API citizen).
+      - name: Cache HTTP responses
+        uses: actions/cache@v4
+        with:
+          path: .http_cache
+          key: http-cache-v1-${{ github.run_id }}
+          restore-keys: |
+            http-cache-v1-
+
       - name: Run live pipeline (Overpass + Census)
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: |
+          ALL="AL,AK,AZ,AR,CA,CO,CT,DE,DC,FL,GA,HI,ID,IL,IN,IA,KS,KY,LA,ME,MD,MA,MI,MN,MS,MO,MT,NE,NV,NH,NJ,NM,NY,NC,ND,OH,OK,OR,PA,RI,SC,SD,TN,TX,UT,VT,VA,WA,WV,WI,WY"
           STATES="${{ github.event.inputs.states }}"
-          STATES="${STATES:-CT,NY,NJ,PA,MA,RI,NH,VT,ME,MD,AZ,OR,CA,IL,OH,MI,WA,CO,MN,WI}"
+          STATES="${STATES:-$ALL}"
           echo "Running states: $STATES"
           wcpizza run --source live --states "$STATES"
 

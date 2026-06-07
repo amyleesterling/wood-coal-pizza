@@ -83,31 +83,75 @@ def fetch_live(cfg: Config, states: List[str]) -> tuple[list, dict]:
     }
 
     restaurants: List[Dict[str, Any]] = []
-    places: List[Dict[str, Any]] = []
     for abbr in state_abbrs:
         full = abbr_to_name[abbr]
         print(f"  [OSM] fetching pizzerias in {full} ...", file=sys.stderr)
-        restaurants += osm_src.fetch_state(
-            full, endpoint=cfg.osm.endpoint, cache=cache,
-            amenities=list(cfg.osm.amenities), timeout=cfg.osm.timeout_s,
-            user_agent=ua, sleep_after=cfg.osm.sleep_between_requests_s,
-        )
-        # Census is non-fatal: the map and classification only need OSM data,
-        # so a Census hiccup (e.g. the keyless rate limit on shared CI IPs)
-        # shouldn't abort the whole run. We just won't rank that state.
-        print(f"  [Census] fetching places in {abbr} ...", file=sys.stderr)
+        # Per-state OSM fetch is non-fatal: across 50 states one flaky area
+        # query shouldn't sink the whole run.
         try:
-            places += census_src.fetch_state_places(
-                abbr, endpoint=cfg.census.endpoint, dataset=cfg.census.dataset,
-                population_variable=cfg.census.population_variable, cache=cache,
-                api_key=cfg.census_api_key(), user_agent=ua,
+            restaurants += osm_src.fetch_state(
+                full, endpoint=cfg.osm.endpoint, cache=cache,
+                amenities=list(cfg.osm.amenities), timeout=cfg.osm.timeout_s,
+                user_agent=ua, sleep_after=cfg.osm.sleep_between_requests_s,
             )
         except Exception as exc:  # noqa: BLE001 - degrade gracefully
-            print(f"  [Census] WARNING: population fetch failed for {abbr}: "
-                  f"{exc}. Ranking will skip this state; map is unaffected.",
+            print(f"  [OSM] WARNING: fetch failed for {full}: {exc}",
                   file=sys.stderr)
 
-    pop_index = census_src.build_population_index(places)
+    pop_index = census_src.build_population_index(
+        _fetch_population(cfg, cache, set(state_abbrs), ua))
+    return restaurants, pop_index
+
+
+def _fetch_population(cfg: Config, cache, wanted: set, ua: str) -> list:
+    """Get place populations, preferring the keyless static PEP file.
+
+    The Census *API* requires a key on shared IPs (CI runners), so by default
+    we download the static Population Estimates CSV from www2.census.gov, which
+    needs no key. If that fails and a CENSUS_API_KEY is set, fall back to the
+    API. Population is non-fatal: failure just means no per-capita ranking.
+    """
+    from .sources import census as census_src
+
+    api_key = cfg.census_api_key()
+    url = cfg.census.get("population_file_url") if hasattr(cfg.census, "get") \
+        else cfg.data.get("census", {}).get("population_file_url")
+
+    if url:
+        print(f"  [Census] downloading keyless population file ...",
+              file=sys.stderr)
+        try:
+            places = census_src.fetch_places_static(
+                url=url, cache=cache, wanted_states=wanted, user_agent=ua,
+                timeout=cfg.osm.timeout_s)
+            if places:
+                print(f"  [Census] got {len(places)} places from static file.",
+                      file=sys.stderr)
+                return places
+            print("  [Census] static file yielded no places.", file=sys.stderr)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [Census] WARNING: static population file failed: {exc}",
+                  file=sys.stderr)
+
+    if api_key:
+        print("  [Census] falling back to the API (CENSUS_API_KEY set) ...",
+              file=sys.stderr)
+        places = []
+        for abbr in sorted(wanted):
+            try:
+                places += census_src.fetch_state_places(
+                    abbr, endpoint=cfg.census.endpoint,
+                    dataset=cfg.census.dataset,
+                    population_variable=cfg.census.population_variable,
+                    cache=cache, api_key=api_key, user_agent=ua)
+            except Exception as exc:  # noqa: BLE001
+                print(f"  [Census] WARNING: API failed for {abbr}: {exc}",
+                      file=sys.stderr)
+        return places
+
+    print("  [Census] no population available -> ranking will be empty.",
+          file=sys.stderr)
+    return []
     return restaurants, pop_index
 
 
@@ -139,27 +183,58 @@ def assign_cities(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return records
 
 
-def classify_all(records: List[Dict[str, Any]], cfg: Config) -> List[Dict[str, Any]]:
-    use_web = bool(cfg.classify.use_website_text)
-    web_fetch = None
-    if use_web:
-        from .sources.website import fetch_website_text
-        web_fetch = fetch_website_text
+def _classify_one(rec: Dict[str, Any], website_text=None) -> None:
+    result = classify(
+        name=rec.get("name"),
+        description=rec.get("description"),
+        osm_tags=rec.get("tags"),
+        website_text=website_text,
+    )
+    rec.update(result.as_dict())
 
+
+def classify_all(records: List[Dict[str, Any]], cfg: Config) -> List[Dict[str, Any]]:
+    # First pass: classify everyone from names/descriptions/OSM tags only.
     for rec in records:
-        website_text = None
-        if web_fetch is not None:
-            website_text = web_fetch(
-                rec.get("website"), user_agent=cfg.run.user_agent,
-                timeout=cfg.classify.website_fetch_timeout_s,
-            )
-        result = classify(
-            name=rec.get("name"),
-            description=rec.get("description"),
-            osm_tags=rec.get("tags"),
-            website_text=website_text,
-        )
-        rec.update(result.as_dict())
+        _classify_one(rec)
+
+    if not bool(cfg.classify.use_website_text):
+        return records
+
+    # Second pass (optional): for the records a website could actually change
+    # — those still "unknown" or only ambiguously solid-fuel AND with a website
+    # — fetch the homepage text (robots-respecting) and re-classify. We cap the
+    # number of fetches and run them concurrently so this stays feasible/polite
+    # even across tens of thousands of pizzerias.
+    from concurrent.futures import ThreadPoolExecutor
+
+    from .sources.website import fetch_website_text
+
+    cap = int(cfg.classify.max_website_fetches)
+    workers = int(cfg.classify.website_workers)
+    ua = cfg.run.user_agent
+    timeout = cfg.classify.website_fetch_timeout_s
+
+    candidates = [r for r in records
+                  if r.get("website") and r.get("oven_label") in
+                  ("unknown", "wood_or_coal")][:cap]
+    print(f"  [web] enriching {len(candidates)} candidates "
+          f"(cap {cap}, {workers} workers) ...", file=sys.stderr)
+
+    def fetch(rec):
+        return rec, fetch_website_text(rec.get("website"), user_agent=ua,
+                                       timeout=timeout)
+
+    upgraded = 0
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        for rec, text in ex.map(fetch, candidates):
+            if text:
+                before = rec.get("oven_label")
+                _classify_one(rec, website_text=text)
+                if rec.get("oven_label") != before:
+                    upgraded += 1
+    print(f"  [web] re-classified {upgraded} pizzerias from website text.",
+          file=sys.stderr)
     return records
 
 

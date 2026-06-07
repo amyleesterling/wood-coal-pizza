@@ -65,12 +65,21 @@ def robots_allows(url: str, user_agent: str) -> bool:
         return False
     robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
     rp = RobotFileParser()
-    rp.set_url(robots_url)
+    # Fetch robots.txt via requests so we get a real timeout (RobotFileParser's
+    # own .read() uses urllib with no timeout and can hang a worker forever).
     try:
-        rp.read()
+        resp = requests.get(robots_url, headers={"User-Agent": user_agent},
+                            timeout=timeout)
     except Exception:
         # If robots.txt can't be read, be conservative and decline.
         return False
+    if resp.status_code in (401, 403):
+        # Access to robots.txt itself is restricted -> treat as disallow.
+        return False
+    if resp.status_code >= 400:
+        # No robots.txt (e.g. 404) conventionally means crawling is allowed.
+        return True
+    rp.parse(resp.text.splitlines())
     return rp.can_fetch(user_agent, url)
 
 

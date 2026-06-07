@@ -33,6 +33,10 @@ census:
   # A Census API key is optional for low volumes but recommended. Set it via
   # the CENSUS_API_KEY environment variable (never commit a key).
   api_key_env: "CENSUS_API_KEY"
+  # Keyless alternative used by default: the Population Estimates Program (PEP)
+  # sub-county file is a plain CSV download (no API key, and not subject to the
+  # Census API's per-IP keyless throttle that blocks shared CI runner IPs).
+  population_file_url: "https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/cities/totals/sub-est2023.csv"
 
 dedupe:
   # Two POIs are considered the same restaurant if they are within
@@ -45,12 +49,16 @@ classify:
   # Minimum confidence (0..1) for a positive wood/coal classification to be
   # counted in the ranking. Tune for precision vs. recall.
   min_confidence: 0.5
-  # If True, optionally enrich classification by fetching each candidate's
-  # website text — ONLY for sites whose robots.txt permits it (see
-  # sources/website.py). Off by default to keep the default run fast and to
-  # avoid any fetching the operator hasn't opted into.
-  use_website_text: false
+  # If True, enrich classification by fetching candidate websites' text — ONLY
+  # for sites whose robots.txt permits it (see sources/website.py), and only for
+  # records a website could actually reclassify (currently unknown/ambiguous
+  # with a website). Fetches are capped and run concurrently to stay polite.
+  use_website_text: true
   website_fetch_timeout_s: 10
+  # Hard cap on website fetches per run (bounds time and outbound volume).
+  max_website_fetches: 8000
+  # Concurrency for website fetches.
+  website_workers: 16
 
 rank:
   # A city must have at least this many detected wood/coal pizzerias to appear

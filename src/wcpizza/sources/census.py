@@ -109,3 +109,67 @@ def build_population_index(
         if existing is None or p["population"] > existing["population"]:
             index[key] = p
     return index
+
+
+# ---------------------------------------------------------------------------
+# Keyless alternative: the Population Estimates Program (PEP) sub-county file.
+# This is a static CSV on www2.census.gov — no API key, and not subject to the
+# Census *API*'s per-IP keyless throttle (which blocks shared CI runner IPs).
+# ---------------------------------------------------------------------------
+
+# SUMLEV codes we treat as a "city": incorporated places and consolidated
+# cities. (157 = county-place parts; excluded to avoid double counting.)
+_PLACE_SUMLEVS = {"162", "170"}
+_POP_YEAR_COLS = ("POPESTIMATE2023", "POPESTIMATE2022",
+                  "POPESTIMATE2021", "POPESTIMATE2020", "ESTIMATESBASE2020")
+
+
+def parse_subest(text: str,
+                 wanted_states: Optional[set] = None) -> List[Dict[str, Any]]:
+    """Parse a PEP sub-est CSV into place population records."""
+    import csv
+    import io
+
+    reader = csv.DictReader(io.StringIO(text))
+    out: List[Dict[str, Any]] = []
+    for row in reader:
+        if (row.get("SUMLEV") or "").strip() not in _PLACE_SUMLEVS:
+            continue
+        st_fips = (row.get("STATE") or "").zfill(2)
+        abbr = STATE_FIPS_TO_ABBR.get(st_fips)
+        if not abbr or (wanted_states and abbr not in wanted_states):
+            continue
+        population = None
+        for col in _POP_YEAR_COLS:
+            val = row.get(col)
+            if val not in (None, "", "."):
+                try:
+                    population = int(float(val))
+                    break
+                except ValueError:
+                    pass
+        if population is None:
+            continue
+        name = row.get("NAME") or ""
+        out.append({
+            "place_display": f"{name}, {row.get('STNAME', '')}",
+            "city_norm": normalize_city(name),
+            "state": abbr,
+            "population": population,
+            "geoid": f"{st_fips}{(row.get('PLACE') or '').zfill(5)}",
+        })
+    return out
+
+
+def fetch_places_static(
+    *,
+    url: str,
+    cache: HttpCache,
+    wanted_states: Optional[set] = None,
+    user_agent: str = "wcpizza/0.1",
+    timeout: int = 180,
+) -> List[Dict[str, Any]]:
+    """Download and parse the keyless PEP sub-est population file."""
+    text = http_request("GET", url, cache=cache, user_agent=user_agent,
+                        timeout=timeout, expect="text")
+    return parse_subest(text, wanted_states)
