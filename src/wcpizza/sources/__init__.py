@@ -41,11 +41,13 @@ def http_request(
 
     headers = {"User-Agent": user_agent}
     # Public Overpass/Census instances throttle (429) and occasionally return
-    # 5xx under load. Retry transient failures with exponential backoff so a
-    # multi-state run doesn't die on a single hiccup.
+    # 5xx under load. Retry those transient failures with exponential backoff so
+    # a multi-state run doesn't die on a single hiccup. A 2xx with a non-JSON
+    # body (e.g. the Census "a valid key is required" message returned to
+    # rate-limited keyless callers) is deterministic, so we fail fast on it
+    # rather than burning the full backoff budget on every state.
     max_attempts = 5
     backoff = 4.0
-    last_exc: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         try:
             resp = requests.request(method, url, params=params, data=data,
@@ -53,15 +55,23 @@ def http_request(
             if resp.status_code in (429, 502, 503, 504) and attempt < max_attempts:
                 raise requests.HTTPError(f"transient {resp.status_code}")
             resp.raise_for_status()
-            result = resp.json() if expect == "json" else resp.text
             break
-        except (requests.RequestException, ValueError) as exc:
-            last_exc = exc
+        except requests.RequestException:
             if attempt >= max_attempts:
                 raise
             time.sleep(backoff * attempt)
-    else:  # pragma: no cover - loop always breaks or raises
-        raise last_exc  # type: ignore[misc]
+
+    if expect == "json":
+        try:
+            result = resp.json()
+        except ValueError as exc:
+            snippet = (resp.text or "").strip()[:200]
+            raise ValueError(
+                f"Non-JSON response from {url} (HTTP {resp.status_code}): "
+                f"{snippet!r}"
+            ) from exc
+    else:
+        result = resp.text
 
     if cache is not None:
         cache.set(method, url, payload, result)

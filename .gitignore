@@ -23,6 +23,7 @@ data/processed/*
 !data/processed/ranking_sample.csv
 !data/processed/restaurants_sample.csv
 !data/processed/summary_sample.json
+!data/processed/map_sample.html
 
 # OS
 .DS_Store

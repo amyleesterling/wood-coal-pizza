@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wood/Coal-Fired Pizza Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<style>
+  html, body { height: 100%; margin: 0; }
+  #map { height: 100%; width: 100%; }
+  .legend { background: white; padding: 8px 10px; border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,.3); font: 13px/1.4 sans-serif; }
+  .legend h4 { margin: 0 0 6px; font-size: 13px; }
+  .legend .row { display: flex; align-items: center; margin: 2px 0; }
+  .legend .dot { width: 12px; height: 12px; border-radius: 50%;
+                 margin-right: 6px; border: 1px solid #555; }
+  .legend .total { margin-top: 6px; color: #555; }
+  .popup b { font-size: 14px; }
+  .popup .ev { color: #555; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+  var TITLE = "Wood/Coal-Fired Pizza — pizzerias by oven type";
+  var CENTER = [40.746128000000006, -87.12918400000001];
+  var STYLES = {"coal": ["Coal-fired", "#1a1a1a"], "wood": ["Wood-fired", "#d7301f"], "wood_or_coal": ["Wood/coal (ambiguous)", "#8c510a"], "gas_electric": ["Gas / electric", "#4575b4"], "unknown": ["Unknown", "#9e9e9e"]};
+  var COUNTS = {"coal": 6, "wood": 13, "unknown": 3, "gas_electric": 2, "wood_or_coal": 1};
+  var TOTAL = 25;
+  var DATA = {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.927, 41.3052]}, "properties": {"name": "Frank Pepe Pizzeria Napoletana", "city": "New Haven", "state": "CT", "label": "coal", "confidence": 0.97, "evidence": "osm:oven=coal", "website": "http://pepespizzeria.com"}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.9255, 41.3068]}, "properties": {"name": "Sally's Apizza Coal Fired", "city": "New Haven", "state": "CT", "label": "coal", "confidence": 1.0, "evidence": "coal:'coal fired'; coal:'coal fired pizza'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.91, 41.322]}, "properties": {"name": "Modern Apizza", "city": "New Haven", "state": "CT", "label": "coal", "confidence": 0.97, "evidence": "osm:oven=coal", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.96, 41.3001]}, "properties": {"name": "Zuppardi's Apizza", "city": "New Haven", "state": "CT", "label": "coal", "confidence": 1.0, "evidence": "coal:'coal fired'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.929, 41.308]}, "properties": {"name": "BAR", "city": "New Haven", "state": "CT", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-72.923, 41.311]}, "properties": {"name": "Pizza Hut", "city": "New Haven", "state": "CT", "label": "unknown", "confidence": 0.0, "evidence": "", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-73.9955, 40.7215]}, "properties": {"name": "Lombardi's Coal Oven Pizza", "city": "New York", "state": "NY", "label": "coal", "confidence": 1.0, "evidence": "coal:'coal oven'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-74.0021, 40.7305]}, "properties": {"name": "Keste Pizza e Vino", "city": "New York", "state": "NY", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'; woodlean:'neapolitan'; woodlean:'napoletana'; woodlean:'vera pizza'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-73.9333, 40.705]}, "properties": {"name": "Roberta's", "city": "New York", "state": "NY", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-74.0036, 40.7318]}, "properties": {"name": "John's of Bleecker Street", "city": "New York", "state": "NY", "label": "coal", "confidence": 1.0, "evidence": "coal:'coal fired'; solid:'brick oven'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-74.0029, 40.7301]}, "properties": {"name": "Joe's Pizza", "city": "New York", "state": "NY", "label": "gas_electric", "confidence": 0.95, "evidence": "osm:oven=gas", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-74.006, 40.7128]}, "properties": {"name": "Generic Slice Shop", "city": "New York", "state": "NY", "label": "unknown", "confidence": 0.0, "evidence": "", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-112.067, 33.452]}, "properties": {"name": "Pizzeria Bianco", "city": "Phoenix", "state": "AZ", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-112.07, 33.46]}, "properties": {"name": "Cibo Urban Wine Bar", "city": "Phoenix", "state": "AZ", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-112.03, 33.509]}, "properties": {"name": "Pomo Pizzeria Napoletana", "city": "Phoenix", "state": "AZ", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'; woodlean:'napoletana'; woodlean:'vera pizza'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-112.074, 33.448]}, "properties": {"name": "Barro's Pizza", "city": "Phoenix", "state": "AZ", "label": "gas_electric", "confidence": 0.95, "evidence": "osm:oven=gas", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-122.641, 45.523]}, "properties": {"name": "Ken's Artisan Pizza", "city": "Portland", "state": "OR", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'; woodlean:'artisan pizza'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-122.63, 45.471]}, "properties": {"name": "Apizza Scholls", "city": "Portland", "state": "OR", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-122.67, 45.56]}, "properties": {"name": "Lovely's Fifty Fifty", "city": "Portland", "state": "OR", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood burning'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-122.65, 45.54]}, "properties": {"name": "Dove Vivi", "city": "Portland", "state": "OR", "label": "unknown", "confidence": 0.0, "evidence": "conv:'deck oven'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-71.081, 42.349]}, "properties": {"name": "Picco", "city": "Boston", "state": "MA", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-71.101, 42.373]}, "properties": {"name": "Posto", "city": "Boston", "state": "MA", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-71.103, 42.365]}, "properties": {"name": "Area Four", "city": "Boston", "state": "MA", "label": "wood", "confidence": 1.0, "evidence": "wood:'wood fired'; wood:'wood fire'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-71.056, 42.365]}, "properties": {"name": "Regina Pizzeria", "city": "Boston", "state": "MA", "label": "wood_or_coal", "confidence": 0.45, "evidence": "solid:'brick oven'", "website": ""}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-73.5387, 41.0534]}, "properties": {"name": "Colony Grill Wood Fired", "city": "Stamford", "state": "CT", "label": "wood", "confidence": 0.97, "evidence": "osm:oven=wood", "website": ""}}]};
+
+  var map = L.map("map").setView(CENTER, TOTAL > 0 ? 6 : 4);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)'
+  }).addTo(map);
+
+  function styleFor(label) { return STYLES[label] || ["Other", "#9e9e9e"]; }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // One clustered layer per oven category, so the layer control filters them.
+  var layers = {};
+  Object.keys(STYLES).forEach(function(key) {
+    layers[key] = L.markerClusterGroup({ chunkedLoading: true });
+  });
+
+  DATA.features.forEach(function(f) {
+    var p = f.properties;
+    var c = f.geometry.coordinates;
+    var st = styleFor(p.label);
+    var marker = L.circleMarker([c[1], c[0]], {
+      radius: 6, color: "#333", weight: 1,
+      fillColor: st[1], fillOpacity: 0.85
+    });
+    var conf = (p.confidence == null) ? "" : " (conf " + p.confidence + ")";
+    var site = p.website
+      ? '<br><a href="' + esc(p.website) + '" target="_blank" rel="noopener">website</a>'
+      : "";
+    var ev = p.evidence ? '<div class="ev">' + esc(p.evidence) + '</div>' : "";
+    marker.bindPopup(
+      '<div class="popup"><b>' + esc(p.name) + '</b><br>' +
+      esc([p.city, p.state].filter(Boolean).join(", ")) + '<br>' +
+      '<b>' + esc(st[0]) + '</b>' + esc(conf) + ev + site + '</div>'
+    );
+    (layers[p.label] || layers["unknown"]).addLayer(marker);
+  });
+
+  var overlays = {};
+  Object.keys(layers).forEach(function(key) {
+    var st = styleFor(key);
+    var count = COUNTS[key] || 0;
+    if (count === 0) return;
+    map.addLayer(layers[key]);
+    overlays['<span style="color:' + st[1] + '">&#9679;</span> ' +
+             st[0] + ' (' + count + ')'] = layers[key];
+  });
+  L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+  var legend = L.control({ position: "bottomright" });
+  legend.onAdd = function() {
+    var div = L.DomUtil.create("div", "legend");
+    var html = "<h4>" + esc(TITLE) + "</h4>";
+    Object.keys(STYLES).forEach(function(key) {
+      var st = STYLES[key], count = COUNTS[key] || 0;
+      if (count === 0) return;
+      html += '<div class="row"><span class="dot" style="background:' +
+        st[1] + '"></span>' + esc(st[0]) + ' &middot; ' + count + '</div>';
+    });
+    html += '<div class="total">' + TOTAL + ' pizzerias mapped</div>';
+    div.innerHTML = html;
+    return div;
+  };
+  legend.addTo(map);
+</script>
+</body>
+</html>

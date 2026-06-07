@@ -54,21 +54,23 @@ jobs:
       - name: Collect results
         run: |
           mkdir -p results
-          cp data/processed/ranking.csv     results/ranking.csv
           cp data/processed/restaurants.csv results/restaurants.csv
+          cp data/processed/map.html        results/map.html
           cp data/processed/summary.json    results/summary.json
-          echo "----- TOP 20 CITIES -----"
-          head -n 21 results/ranking.csv
+          cp data/processed/ranking.csv     results/ranking.csv || true
+          echo "----- restaurants: $(($(wc -l < results/restaurants.csv) - 1)) -----"
+          echo "----- TOP CITIES (empty if no Census key) -----"
+          head -n 21 results/ranking.csv || true
 
       - name: Commit results to branch
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f results/ranking.csv results/restaurants.csv results/summary.json
-          git commit -m "Live ranking results [skip ci]" || echo "no changes to commit"
+          git add -f results/restaurants.csv results/map.html results/summary.json results/ranking.csv
+          git commit -m "Live results: pizzeria map + ranking [skip ci]" || echo "no changes to commit"
           git push origin HEAD:${{ github.ref_name }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: live-ranking
+          name: live-results
           path: results/

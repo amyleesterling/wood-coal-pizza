@@ -92,12 +92,20 @@ def fetch_live(cfg: Config, states: List[str]) -> tuple[list, dict]:
             amenities=list(cfg.osm.amenities), timeout=cfg.osm.timeout_s,
             user_agent=ua, sleep_after=cfg.osm.sleep_between_requests_s,
         )
+        # Census is non-fatal: the map and classification only need OSM data,
+        # so a Census hiccup (e.g. the keyless rate limit on shared CI IPs)
+        # shouldn't abort the whole run. We just won't rank that state.
         print(f"  [Census] fetching places in {abbr} ...", file=sys.stderr)
-        places += census_src.fetch_state_places(
-            abbr, endpoint=cfg.census.endpoint, dataset=cfg.census.dataset,
-            population_variable=cfg.census.population_variable, cache=cache,
-            api_key=cfg.census_api_key(), user_agent=ua,
-        )
+        try:
+            places += census_src.fetch_state_places(
+                abbr, endpoint=cfg.census.endpoint, dataset=cfg.census.dataset,
+                population_variable=cfg.census.population_variable, cache=cache,
+                api_key=cfg.census_api_key(), user_agent=ua,
+            )
+        except Exception as exc:  # noqa: BLE001 - degrade gracefully
+            print(f"  [Census] WARNING: population fetch failed for {abbr}: "
+                  f"{exc}. Ranking will skip this state; map is unaffected.",
+                  file=sys.stderr)
 
     pop_index = census_src.build_population_index(places)
     return restaurants, pop_index
@@ -173,9 +181,15 @@ _RANKING_FIELDS = [
 
 def write_outputs(cfg: Config, restaurants: List[Dict[str, Any]],
                   ranking: List[Dict[str, Any]], meta: Dict[str, Any]) -> Path:
+    from .map import write_map
+
     out_dir = Path(cfg.run.processed_dir)
     write_csv(out_dir / "restaurants.csv", restaurants, _RESTAURANT_FIELDS)
     write_csv(out_dir / "ranking.csv", ranking, _RANKING_FIELDS)
+    # Interactive map of every pizzeria, colored by oven type. Only needs the
+    # OSM-derived points, so it renders even when Census/ranking is unavailable.
+    write_map(out_dir / "map.html", restaurants,
+              title="Wood/Coal-Fired Pizza — pizzerias by oven type")
     summary = dict(meta)
     summary["top_cities"] = [
         {k: r.get(k) for k in ("rank", "city_display", "state",
@@ -265,6 +279,13 @@ def build_parser() -> argparse.ArgumentParser:
     fetch = sub.add_parser("fetch", help="Only fetch & cache raw sources.")
     fetch.add_argument("--states", required=True,
                        help="Comma-separated states, e.g. NY,NJ,CT.")
+
+    mp = sub.add_parser("map", help="Build the interactive map from a "
+                                    "restaurants.csv produced by `run`.")
+    mp.add_argument("--input", default="data/processed/restaurants.csv",
+                    help="Path to a restaurants.csv from a previous run.")
+    mp.add_argument("--out", default="data/processed/map.html",
+                    help="Output HTML path.")
     return p
 
 
@@ -285,7 +306,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(meta, indent=2))
         out = Path(meta["output_dir"])
         print(f"\nWrote: {out/'ranking.csv'}\n       {out/'restaurants.csv'}"
-              f"\n       {out/'summary.json'}")
+              f"\n       {out/'map.html'}\n       {out/'summary.json'}")
+        return 0
+
+    if args.command == "map":
+        import csv
+
+        from .map import write_map
+        with open(args.input, encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        path = write_map(args.out, rows)
+        print(f"Wrote interactive map with {len(rows)} pizzerias -> {path}")
         return 0
 
     return 1
