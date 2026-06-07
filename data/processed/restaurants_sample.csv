@@ -1,0 +1,26 @@
+id,source,name,lat,lon,city_display,city_norm,state,oven_label,oven_confidence,oven_evidence,website,dup_count
+osm:node/101,osm,Frank Pepe Pizzeria Napoletana,41.3052,-72.927,New Haven,new haven,CT,coal,0.97,osm:oven=coal,http://pepespizzeria.com,2
+osm:node/102,osm,Sally's Apizza Coal Fired,41.3068,-72.9255,New Haven,new haven,CT,coal,1.0,coal:'coal fired'; coal:'coal fired pizza',,1
+osm:node/103,osm,Modern Apizza,41.322,-72.91,New Haven,new haven,CT,coal,0.97,osm:oven=coal,,1
+osm:node/104,osm,Zuppardi's Apizza,41.3001,-72.96,New Haven,new haven,CT,coal,1.0,coal:'coal fired',,1
+osm:node/105,osm,BAR,41.308,-72.929,New Haven,new haven,CT,wood,0.97,osm:oven=wood,,1
+osm:node/106,osm,Pizza Hut,41.311,-72.923,New Haven,new haven,CT,unknown,0.0,,,1
+osm:node/110,osm,Lombardi's Coal Oven Pizza,40.7215,-73.9955,New York,new york,NY,coal,1.0,coal:'coal oven',,1
+osm:node/111,osm,Keste Pizza e Vino,40.7305,-74.0021,New York,new york,NY,wood,1.0,wood:'wood fired'; wood:'wood fire'; woodlean:'neapolitan'; woodlean:'napoletana'; woodlean:'vera pizza',,1
+osm:node/112,osm,Roberta's,40.705,-73.9333,New York,new york,NY,wood,0.97,osm:oven=wood,,1
+osm:node/113,osm,John's of Bleecker Street,40.7318,-74.0036,New York,new york,NY,coal,1.0,coal:'coal fired'; solid:'brick oven',,1
+osm:node/114,osm,Joe's Pizza,40.7301,-74.0029,New York,new york,NY,gas_electric,0.95,osm:oven=gas,,1
+osm:node/115,osm,Generic Slice Shop,40.7128,-74.006,New York,new york,NY,unknown,0.0,,,1
+osm:node/120,osm,Pizzeria Bianco,33.452,-112.067,Phoenix,phoenix,AZ,wood,0.97,osm:oven=wood,,1
+osm:node/121,osm,Cibo Urban Wine Bar,33.46,-112.07,Phoenix,phoenix,AZ,wood,1.0,wood:'wood fired'; wood:'wood fire',,1
+osm:node/122,osm,Pomo Pizzeria Napoletana,33.509,-112.03,Phoenix,phoenix,AZ,wood,1.0,wood:'wood fired'; wood:'wood fire'; woodlean:'napoletana'; woodlean:'vera pizza',,1
+osm:node/123,osm,Barro's Pizza,33.448,-112.074,Phoenix,phoenix,AZ,gas_electric,0.95,osm:oven=gas,,1
+osm:node/130,osm,Ken's Artisan Pizza,45.523,-122.641,Portland,portland,OR,wood,1.0,wood:'wood fired'; wood:'wood fire'; woodlean:'artisan pizza',,1
+osm:node/131,osm,Apizza Scholls,45.471,-122.63,Portland,portland,OR,wood,0.97,osm:oven=wood,,1
+osm:node/132,osm,Lovely's Fifty Fifty,45.56,-122.67,Portland,portland,OR,wood,1.0,wood:'wood burning',,1
+osm:node/133,osm,Dove Vivi,45.54,-122.65,Portland,portland,OR,unknown,0.0,conv:'deck oven',,1
+osm:node/140,osm,Picco,42.349,-71.081,Boston,boston,MA,wood,1.0,wood:'wood fired'; wood:'wood fire',,1
+osm:node/141,osm,Posto,42.373,-71.101,Boston,boston,MA,wood,0.97,osm:oven=wood,,1
+osm:node/142,osm,Area Four,42.365,-71.103,Boston,boston,MA,wood,1.0,wood:'wood fired'; wood:'wood fire',,1
+osm:node/143,osm,Regina Pizzeria,42.365,-71.056,Boston,boston,MA,wood_or_coal,0.45,solid:'brick oven',,1
+osm:node/150,osm,Colony Grill Wood Fired,41.0534,-73.5387,Stamford,stamford,CT,wood,0.97,osm:oven=wood,,1

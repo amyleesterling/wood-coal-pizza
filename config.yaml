@@ -1,0 +1,65 @@
+# Configuration for the wood/coal-fired pizza per-capita pipeline.
+# Every knob that affects the result lives here so runs are reproducible and
+# auditable. Override the path with `wcpizza --config path/to/config.yaml`.
+
+run:
+  # Where pipeline artifacts are written.
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  # Be a polite API citizen. The HTTP layer caches every response on disk so
+  # re-runs are deterministic and don't re-hit the upstream services.
+  http_cache_dir: .http_cache
+  user_agent: "wcpizza/0.1 (+https://github.com/amyleesterling/wood-coal-pizza)"
+
+osm:
+  # Overpass API endpoint (OpenStreetMap data, ODbL-licensed). The Overpass
+  # API is a sanctioned programmatic interface — this is NOT screen-scraping.
+  endpoint: "https://overpass-api.de/api/interpreter"
+  timeout_s: 180
+  # Pause between Overpass requests to respect the public instance's fair-use
+  # policy. Consider self-hosting Overpass for large national runs.
+  sleep_between_requests_s: 5
+  # We only keep POIs whose tags look food-service AND pizza-related.
+  amenities: ["restaurant", "fast_food", "cafe"]
+
+census:
+  # U.S. Census Bureau Data API (public domain). ACS 5-year, table B01003_001E
+  # is total population. "place" = incorporated places + census designated
+  # places, the Census unit closest to a colloquial "city".
+  endpoint: "https://api.census.gov/data"
+  dataset: "2023/acs/acs5"
+  population_variable: "B01003_001E"
+  # A Census API key is optional for low volumes but recommended. Set it via
+  # the CENSUS_API_KEY environment variable (never commit a key).
+  api_key_env: "CENSUS_API_KEY"
+
+dedupe:
+  # Two POIs are considered the same restaurant if they are within
+  # `distance_m` of each other AND their normalized names are at least
+  # `name_similarity` similar (difflib ratio, 0..1).
+  distance_m: 75
+  name_similarity: 0.87
+
+classify:
+  # Minimum confidence (0..1) for a positive wood/coal classification to be
+  # counted in the ranking. Tune for precision vs. recall.
+  min_confidence: 0.5
+  # If True, optionally enrich classification by fetching each candidate's
+  # website text — ONLY for sites whose robots.txt permits it (see
+  # sources/website.py). Off by default to keep the default run fast and to
+  # avoid any fetching the operator hasn't opted into.
+  use_website_text: false
+  website_fetch_timeout_s: 10
+
+rank:
+  # A city must have at least this many detected wood/coal pizzerias to appear
+  # in the ranked output (suppresses noisy small-sample leaders).
+  min_restaurants: 3
+  # Population floor: ignore tiny places where one pizzeria dominates the rate.
+  min_population: 20000
+  # Per-capita basis for the headline metric.
+  per_population: 100000
+  # Empirical-Bayes shrinkage strength (pseudo-count of "national average"
+  # observations added to each city). 0 disables shrinkage. See METHODOLOGY.md.
+  shrinkage_k: 5
