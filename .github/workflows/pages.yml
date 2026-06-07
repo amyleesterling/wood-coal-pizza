@@ -1,0 +1,57 @@
+name: Deploy map to Pages
+
+# Publishes the interactive map (results/map.html) to GitHub Pages. Runs when
+# the committed map changes (i.e. after a live-ranking run commits new results)
+# or when this workflow itself changes. Lightweight: it just deploys the
+# already-generated map, it does not re-run the pipeline.
+#
+# One-time setup required by a repo admin:
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+
+on:
+  push:
+    branches: ["claude/live-run-via-actions"]
+    paths:
+      - "results/map.html"
+      - "results/*.csv"
+      - "results/summary.json"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent Pages deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          if [ -f results/map.html ]; then
+            cp results/map.html site/index.html
+          else
+            echo "<h1>No map yet</h1><p>Run the Live ranking workflow first.</p>" > site/index.html
+          fi
+          cp results/ranking.csv     site/ 2>/dev/null || true
+          cp results/restaurants.csv site/ 2>/dev/null || true
+          cp results/summary.json    site/ 2>/dev/null || true
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

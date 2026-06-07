@@ -16,6 +16,11 @@ on:
     branches: ["claude/live-run-via-actions"]
     paths-ignore:
       - "results/**"
+      - "**.md"
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+      - ".github/workflows/pages.yml"
+      - ".github/workflows/live-ranking.yml"
   workflow_dispatch:
     inputs:
       states:
@@ -25,6 +30,12 @@ on:
 
 permissions:
   contents: write
+
+# Don't let a new push start a second live run on top of one already going;
+# queue it instead of racing on the results commit.
+concurrency:
+  group: live-ranking-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   run:
@@ -78,7 +89,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f results/restaurants.csv results/map.html results/summary.json results/ranking.csv
-          git commit -m "Live results: pizzeria map + ranking [skip ci]" || echo "no changes to commit"
+          # No [skip ci]: this commit only touches results/**, which live-ranking
+          # ignores (so it won't re-trigger itself), but it *should* trigger the
+          # Pages deploy workflow to publish the fresh map.
+          git commit -m "Live results: pizzeria map + ranking" || echo "no changes to commit"
           git push origin HEAD:${{ github.ref_name }}
 
       - uses: actions/upload-artifact@v4

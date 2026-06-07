@@ -59,6 +59,7 @@ Written to `data/processed/`:
 |------|----------|
 | `ranking.csv` | City-level per-capita ranking (the headline result) |
 | `restaurants.csv` | Every deduped pizzeria with its oven classification + evidence |
+| `map.html` | Interactive Leaflet map of every pizzeria, colored by oven type |
 | `summary.json` | Run metadata: record counts, parameters, top cities |
 
 The committed `*_sample.csv` / `*_sample.json` files are the output of
@@ -102,8 +103,36 @@ run is fully described by *(code version + config + cached snapshots)*.
 wcpizza run --source sample            # offline demo
 wcpizza run --source live --states NY,NJ
 wcpizza fetch --states NY              # only fetch + cache raw sources
+wcpizza map --input data/processed/restaurants.csv --out map.html  # (re)build the map
 wcpizza --config myconfig.yaml run ... # override configuration
 ```
+
+## Interactive map
+
+Every run writes a self-contained `map.html` (Leaflet + MarkerCluster, no build
+step) plotting all pizzerias, colored by oven type, with per-category toggles, a
+legend, and popups showing the classification evidence. Open it in any browser,
+or rebuild it from a previous run's CSV with `wcpizza map`.
+
+## Running without local network access (GitHub Actions)
+
+If the machine you're on can't reach Overpass/Census (a locked-down sandbox,
+say), run the pipeline on a GitHub-hosted runner instead — runners have open
+outbound internet. `.github/workflows/live-ranking.yml` runs the live pipeline
+for all 50 states + DC, commits `results/` (map + ranking + restaurants) back to
+the branch, and uploads them as an artifact. It uses the **keyless** Census
+population file by default; set a `CENSUS_API_KEY` repo secret to use the API
+instead. An accumulating HTTP cache keeps re-runs from re-hammering Overpass.
+
+`.github/workflows/tests.yml` runs the test suite on every push/PR.
+
+### Oven-type recall, and how to improve it
+
+In real OSM data only ~1% of pizzerias carry an explicit `oven` tag or a
+name/description that names the fuel, so most land in `unknown`. Two levers
+raise recall: enable website enrichment (`classify.use_website_text: true`,
+which reads each pizzeria's own homepage, robots-respecting and capped/
+concurrent), and lower `classify.min_confidence`. See METHODOLOGY.md §7–8.
 
 ## Caveats
 
