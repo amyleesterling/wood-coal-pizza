@@ -9,6 +9,13 @@ name: Live ranking
 # Census API still works for modest volumes.
 
 on:
+  # Pushing the branch runs the live pipeline (the dev sandbox can't reach the
+  # APIs, but GitHub runners can). paths-ignore + [skip ci] stop the workflow's
+  # own results commit from re-triggering it.
+  push:
+    branches: ["claude/live-run-via-actions"]
+    paths-ignore:
+      - "results/**"
   workflow_dispatch:
     inputs:
       states:
@@ -39,7 +46,10 @@ jobs:
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: |
-          wcpizza run --source live --states "${{ github.event.inputs.states }}"
+          STATES="${{ github.event.inputs.states }}"
+          STATES="${STATES:-CT,NY,NJ,PA,MA,RI,NH,VT,ME,MD,AZ,OR,CA,IL,OH,MI,WA,CO,MN,WI}"
+          echo "Running states: $STATES"
+          wcpizza run --source live --states "$STATES"
 
       - name: Collect results
         run: |
