@@ -74,8 +74,13 @@ def fetch_live(cfg: Config, states: List[str]) -> tuple[list, dict]:
 
     state_abbrs = [normalize_state(s) for s in states]
     state_abbrs = [s for s in state_abbrs if s]
-    # Map abbr -> full name for Overpass area lookups.
-    abbr_to_name = {v: k.title() for k, v in _STATE_NAME_TO_ABBR.items()}
+    # Map abbr -> full name for Overpass area lookups. title() would turn
+    # "district of columbia" into "District Of Columbia", which does not match
+    # the OSM name "District of Columbia", so restore the lowercase "of".
+    abbr_to_name = {
+        v: k.title().replace(" Of ", " of ")
+        for k, v in _STATE_NAME_TO_ABBR.items()
+    }
 
     restaurants: List[Dict[str, Any]] = []
     places: List[Dict[str, Any]] = []

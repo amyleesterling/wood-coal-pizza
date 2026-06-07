@@ -40,10 +40,28 @@ def http_request(
             return hit
 
     headers = {"User-Agent": user_agent}
-    resp = requests.request(method, url, params=params, data=data,
-                            headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    result = resp.json() if expect == "json" else resp.text
+    # Public Overpass/Census instances throttle (429) and occasionally return
+    # 5xx under load. Retry transient failures with exponential backoff so a
+    # multi-state run doesn't die on a single hiccup.
+    max_attempts = 5
+    backoff = 4.0
+    last_exc: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            resp = requests.request(method, url, params=params, data=data,
+                                    headers=headers, timeout=timeout)
+            if resp.status_code in (429, 502, 503, 504) and attempt < max_attempts:
+                raise requests.HTTPError(f"transient {resp.status_code}")
+            resp.raise_for_status()
+            result = resp.json() if expect == "json" else resp.text
+            break
+        except (requests.RequestException, ValueError) as exc:
+            last_exc = exc
+            if attempt >= max_attempts:
+                raise
+            time.sleep(backoff * attempt)
+    else:  # pragma: no cover - loop always breaks or raises
+        raise last_exc  # type: ignore[misc]
 
     if cache is not None:
         cache.set(method, url, payload, result)

@@ -1,0 +1,64 @@
+name: Live ranking
+
+# Runs the pipeline against the real Overpass + Census APIs on a GitHub-hosted
+# runner (which has outbound internet), then commits the ranking back to the
+# branch and uploads it as an artifact. Trigger manually from the Actions tab
+# or via the API (workflow_dispatch).
+#
+# A CENSUS_API_KEY repo secret is optional but recommended; without it the
+# Census API still works for modest volumes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "Comma-separated USPS state codes to include"
+        required: true
+        default: "CT,NY,NJ,PA,MA,RI,NH,VT,ME,MD,AZ,OR,CA,IL,OH,MI,WA,CO,MN,WI"
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run live pipeline (Overpass + Census)
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: |
+          wcpizza run --source live --states "${{ github.event.inputs.states }}"
+
+      - name: Collect results
+        run: |
+          mkdir -p results
+          cp data/processed/ranking.csv     results/ranking.csv
+          cp data/processed/restaurants.csv results/restaurants.csv
+          cp data/processed/summary.json    results/summary.json
+          echo "----- TOP 20 CITIES -----"
+          head -n 21 results/ranking.csv
+
+      - name: Commit results to branch
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f results/ranking.csv results/restaurants.csv results/summary.json
+          git commit -m "Live ranking results [skip ci]" || echo "no changes to commit"
+          git push origin HEAD:${{ github.ref_name }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-ranking
+          path: results/
