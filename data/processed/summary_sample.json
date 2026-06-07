@@ -1,0 +1,73 @@
+{
+  "wcpizza_version": "0.1.0",
+  "source": "sample",
+  "states": [],
+  "raw_records": 26,
+  "deduped_records": 25,
+  "wood_coal_detected": 19,
+  "cities_ranked": 5,
+  "parameters": {
+    "dedupe": {
+      "distance_m": 75,
+      "name_similarity": 0.87
+    },
+    "classify": {
+      "min_confidence": 0.5,
+      "use_website_text": false,
+      "website_fetch_timeout_s": 10
+    },
+    "rank": {
+      "min_restaurants": 3,
+      "min_population": 20000,
+      "per_population": 100000,
+      "shrinkage_k": 5
+    }
+  },
+  "top_cities": [
+    {
+      "rank": 1,
+      "city_display": "New Haven city, Connecticut",
+      "state": "CT",
+      "wood_coal": 5,
+      "population": 134023,
+      "shrunk_per_100k": 0.3159,
+      "raw_per_100k": 3.7307
+    },
+    {
+      "rank": 2,
+      "city_display": "Portland city, Oregon",
+      "state": "OR",
+      "wood_coal": 3,
+      "population": 652503,
+      "shrunk_per_100k": 0.2171,
+      "raw_per_100k": 0.4598
+    },
+    {
+      "rank": 3,
+      "city_display": "Boston city, Massachusetts",
+      "state": "MA",
+      "wood_coal": 3,
+      "population": 654776,
+      "shrunk_per_100k": 0.217,
+      "raw_per_100k": 0.4582
+    },
+    {
+      "rank": 4,
+      "city_display": "Phoenix city, Arizona",
+      "state": "AZ",
+      "wood_coal": 3,
+      "population": 1608139,
+      "shrunk_per_100k": 0.1724,
+      "raw_per_100k": 0.1866
+    },
+    {
+      "rank": 5,
+      "city_display": "New York city, New York",
+      "state": "NY",
+      "wood_coal": 4,
+      "population": 8336817,
+      "shrunk_per_100k": 0.0792,
+      "raw_per_100k": 0.048
+    }
+  ]
+}

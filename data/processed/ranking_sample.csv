@@ -1,0 +1,6 @@
+rank,city_display,state,geoid,population,wood_coal,wood,coal,ambiguous,total_pizzerias,raw_per_100k,shrunk_per_100k,expected_wood_coal
+1,"New Haven city, Connecticut",CT,0952000,134023,5,1,4,0,6,3.7307,0.3159,0.22
+2,"Portland city, Oregon",OR,4159000,652503,3,3,0,0,4,0.4598,0.2171,1.08
+3,"Boston city, Massachusetts",MA,2507000,654776,3,3,0,0,4,0.4582,0.217,1.08
+4,"Phoenix city, Arizona",AZ,0455000,1608139,3,3,0,0,4,0.1866,0.1724,2.65
+5,"New York city, New York",NY,3651000,8336817,4,2,2,0,6,0.048,0.0792,13.75

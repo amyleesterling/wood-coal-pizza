@@ -1,0 +1,8 @@
+# Runtime dependencies for the wood/coal-fired pizza per-capita pipeline.
+# Intentionally minimal for reproducibility: the core (classify/dedupe/rank)
+# uses only the Python standard library; networking uses `requests`, and
+# config uses PyYAML. Pin ranges are conservative.
+requests>=2.28,<3
+PyYAML>=6.0,<7
+
+# Dev / test only (install with: pip install -r requirements-dev.txt)

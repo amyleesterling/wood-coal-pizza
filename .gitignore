@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Pipeline data: raw/interim artifacts and default run outputs are reproducible
+# from sources, so we don't commit them. The small curated sample fixtures and
+# the *_sample demonstration outputs ARE committed (see negations below).
+data/raw/
+data/interim/
+.http_cache/
+
+# Ignore generated run outputs but keep the committed sample demonstration.
+data/processed/*
+!data/processed/ranking_sample.csv
+!data/processed/restaurants_sample.csv
+!data/processed/summary_sample.json
+
+# OS
+.DS_Store

@@ -1,0 +1,36 @@
+{
+  "_comment": "Synthetic Overpass-format fixture for offline demos and tests. Coordinates are approximate and tags are illustrative; this is NOT a real OSM extract. It exercises dedup (Frank Pepe appears as a node and a way), every classifier path (osm oven tag, strong name/description keywords, ambiguous brick-oven, conventional, unknown), and the ranking thresholds.",
+  "elements": [
+    {"type": "node", "id": 101, "lat": 41.3052, "lon": -72.9270, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Frank Pepe Pizzeria Napoletana", "addr:city": "New Haven", "addr:state": "CT", "oven": "coal", "website": "http://pepespizzeria.com"}},
+    {"type": "way", "id": 201, "center": {"lat": 41.30521, "lon": -72.92702}, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Frank Pepe Pizzeria Napoletana", "addr:city": "New Haven", "addr:state": "CT"}},
+    {"type": "node", "id": 102, "lat": 41.3068, "lon": -72.9255, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Sally's Apizza Coal Fired", "addr:city": "New Haven", "addr:state": "CT"}},
+    {"type": "node", "id": 103, "lat": 41.3220, "lon": -72.9100, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Modern Apizza", "addr:city": "New Haven", "addr:state": "CT", "oven": "coal"}},
+    {"type": "node", "id": 104, "lat": 41.3001, "lon": -72.9600, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Zuppardi's Apizza", "addr:city": "New Haven", "addr:state": "Connecticut", "description": "Family coal fired apizza since 1934"}},
+    {"type": "node", "id": 105, "lat": 41.3080, "lon": -72.9290, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "BAR", "addr:city": "New Haven", "addr:state": "CT", "oven": "wood"}},
+    {"type": "node", "id": 106, "lat": 41.3110, "lon": -72.9230, "tags": {"amenity": "fast_food", "cuisine": "pizza", "name": "Pizza Hut", "addr:city": "New Haven", "addr:state": "CT"}},
+
+    {"type": "node", "id": 110, "lat": 40.7215, "lon": -73.9955, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Lombardi's Coal Oven Pizza", "addr:city": "New York", "addr:state": "NY"}},
+    {"type": "node", "id": 111, "lat": 40.7305, "lon": -74.0021, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Keste Pizza e Vino", "addr:city": "New York", "addr:state": "NY", "description": "Authentic wood fired Neapolitan pizza, vera pizza napoletana"}},
+    {"type": "node", "id": 112, "lat": 40.7050, "lon": -73.9333, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Roberta's", "addr:city": "New York", "addr:state": "NY", "oven": "wood"}},
+    {"type": "node", "id": 113, "lat": 40.7318, "lon": -74.0036, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "John's of Bleecker Street", "addr:city": "New York", "addr:state": "NY", "description": "Coal fired brick oven pizza"}},
+    {"type": "node", "id": 114, "lat": 40.7301, "lon": -74.0029, "tags": {"amenity": "fast_food", "cuisine": "pizza", "name": "Joe's Pizza", "addr:city": "New York", "addr:state": "NY", "oven": "gas"}},
+    {"type": "node", "id": 115, "lat": 40.7128, "lon": -74.0060, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Generic Slice Shop", "addr:city": "New York", "addr:state": "NY"}},
+
+    {"type": "node", "id": 120, "lat": 33.4520, "lon": -112.0670, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Pizzeria Bianco", "addr:city": "Phoenix", "addr:state": "AZ", "oven": "wood"}},
+    {"type": "node", "id": 121, "lat": 33.4600, "lon": -112.0700, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Cibo Urban Wine Bar", "addr:city": "Phoenix", "addr:state": "AZ", "description": "Wood fired pizzas in a 1913 bungalow"}},
+    {"type": "node", "id": 122, "lat": 33.5090, "lon": -112.0300, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Pomo Pizzeria Napoletana", "addr:city": "Phoenix", "addr:state": "AZ", "description": "Wood fired oven, vera pizza napoletana"}},
+    {"type": "node", "id": 123, "lat": 33.4480, "lon": -112.0740, "tags": {"amenity": "fast_food", "cuisine": "pizza", "name": "Barro's Pizza", "addr:city": "Phoenix", "addr:state": "AZ", "oven": "gas"}},
+
+    {"type": "node", "id": 130, "lat": 45.5230, "lon": -122.6410, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Ken's Artisan Pizza", "addr:city": "Portland", "addr:state": "OR", "description": "Wood fired pizza and seasonal fare"}},
+    {"type": "node", "id": 131, "lat": 45.4710, "lon": -122.6300, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Apizza Scholls", "addr:city": "Portland", "addr:state": "OR", "oven": "wood"}},
+    {"type": "node", "id": 132, "lat": 45.5600, "lon": -122.6700, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Lovely's Fifty Fifty", "addr:city": "Portland", "addr:state": "OR", "description": "Wood burning oven, local ingredients"}},
+    {"type": "node", "id": 133, "lat": 45.5400, "lon": -122.6500, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Dove Vivi", "addr:city": "Portland", "addr:state": "OR", "description": "Cornmeal crust deck oven pizza"}},
+
+    {"type": "node", "id": 140, "lat": 42.3490, "lon": -71.0810, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Picco", "addr:city": "Boston", "addr:state": "MA", "description": "Pizza and ice cream, wood fired"}},
+    {"type": "node", "id": 141, "lat": 42.3730, "lon": -71.1010, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Posto", "addr:city": "Boston", "addr:state": "MA", "oven": "wood"}},
+    {"type": "node", "id": 142, "lat": 42.3650, "lon": -71.1030, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Area Four", "addr:city": "Boston", "addr:state": "MA", "description": "Wood fired, naturally leavened pizza"}},
+    {"type": "node", "id": 143, "lat": 42.3650, "lon": -71.0560, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Regina Pizzeria", "addr:city": "Boston", "addr:state": "MA", "description": "Classic brick oven pizza since 1926"}},
+
+    {"type": "node", "id": 150, "lat": 41.0534, "lon": -73.5387, "tags": {"amenity": "restaurant", "cuisine": "pizza", "name": "Colony Grill Wood Fired", "addr:city": "Stamford", "addr:state": "CT", "oven": "wood"}}
+  ]
+}
